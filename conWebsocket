@@ -1,0 +1,79 @@
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { MessagingService } from 'src/app/services/messaging.service';
+import { WebSocketService } from 'src/app/services/websocket.service';
+
+@Component({
+  selector: 'app-chat',
+  templateUrl: './chat.component.html',
+  styleUrls: ['./chat.component.css']
+})
+export class ChatComponent implements OnInit, OnDestroy {
+
+  private chatService: MessagingService = inject(MessagingService);
+  private webSocketService: WebSocketService = inject(WebSocketService);
+
+  public token = "";
+  public userId = "";
+  public chatId = "";
+  public messageContent = "";
+
+  public chats: any = [];
+  public messages: any[] = [];
+
+  ngOnInit(): void {
+    this.token = JSON.parse(localStorage.getItem("token") ?? '');
+    this.userId = JSON.parse(localStorage.getItem("userId") ?? "");
+    this.getMessagesPreview();
+
+    
+    this.webSocketService.connect();
+
+    // Escuchar mensajes entrantes
+    this.webSocketService.onMessageReceived().subscribe((message) => {
+        this.messages.push(message);
+        console.log('Messages:', this.messages);
+    });
+}
+
+  ngOnDestroy(): void {
+    this.webSocketService.closeSocket();
+  }
+
+  public getMessagesPreview() {
+    this.chatService.getChatPreviews(this.token, this.userId).subscribe({
+      next: (response) => {
+        this.chats = response;
+        console.log(this.chats);
+      },
+      error: () => { console.log('Problema con la petición'); }
+    });
+  }
+
+  public getMessagesbyId(chatId: string) {
+    this.chatId = chatId;
+    this.chatService.getMessages(this.token, chatId).subscribe({
+      next: (response) => {
+        this.messages = response;
+        console.log(this.messages);
+      },
+      error: () => { console.log('La petición ha fallado'); }
+    });
+  }
+
+  public sendMessage() {
+    if (!this.messageContent.trim()) {
+      return;
+    }
+
+    const message = {
+      chatId: this.chatId,
+      sender: this.userId,
+      content: this.messageContent,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Sending message:', message);
+    this.webSocketService.sendMessage(message);
+    this.messageContent = '';
+  }
+}

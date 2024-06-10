@@ -1,0 +1,91 @@
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { MessagingService } from 'src/app/services/messaging.service';
+import { WebSocketService } from 'src/app/services/websocket.service';
+import { Subscription } from 'rxjs';
+
+@Component({
+  selector: 'app-chat',
+  templateUrl: './chat.component.html',
+  styleUrls: ['./chat.component.css']
+})
+export class ChatComponent implements OnInit, OnDestroy {
+
+  private chatService: MessagingService = inject(MessagingService);
+  private webSocketService: WebSocketService = inject(WebSocketService);
+  private webSocketSubscription!: Subscription;
+
+  public token = "";
+  public userId = "";
+  public chatId = "";
+  public messageContent = "";
+
+  public chats: any = [];
+  public messages: any[] = [];
+
+  ngOnInit(): void {
+    this.token = JSON.parse(localStorage.getItem("token") ?? '');
+    this.userId = JSON.parse(localStorage.getItem("userId") ?? "");
+    this.getMessagesPreview();
+    this.webSocketService.connect();
+
+    this.webSocketSubscription = this.webSocketService.onMessageReceived().subscribe((message) => {
+        this.messages.push(message);
+        console.log('Messages:', this.messages);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.webSocketService.closeSocket();
+    if (this.webSocketSubscription) {
+        this.webSocketSubscription.unsubscribe();
+    }
+  }
+
+  public getMessagesPreview() {
+    this.chatService.getChatPreviews(this.token, this.userId).subscribe({
+      next: (response) => {
+        this.chats = response;
+        console.log(this.chats);
+      },
+      error: () => { console.log('Problema con la petición'); }
+    });
+  }
+
+  public getMessagesbyId(chatId: string) {
+    this.chatId = chatId;
+    this.chatService.getMessages(this.token, chatId).subscribe({
+      next: (response) => {
+        this.messages = response;
+        console.log(this.messages);
+      },
+      error: () => { console.log('La petición ha fallado'); }
+    });
+  }
+
+  public sendMessage() {
+    if (!this.messageContent.trim()) {
+      return; // Evitar enviar mensajes vacíos
+    }
+
+    const message = {
+      id: this.generateMessageId(),
+      chatId: this.chatId,
+      sender: this.userId,
+      senderUsername: 'evap040', // Reemplaza con el username real si es necesario
+      content: this.messageContent,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Sending message:', message);
+    this.webSocketService.sendMessage(message);
+
+    // Añadir el mensaje al array de mensajes para simular la recepción
+    this.messages.push(message);
+    this.messageContent = '';
+  }
+
+  private generateMessageId(): string {
+    // Generar un ID único para el mensaje
+    return Math.random().toString(36).substr(2, 9);
+  }
+}

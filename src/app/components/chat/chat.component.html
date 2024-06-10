@@ -1,0 +1,80 @@
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+
+<div class="container">
+  <div class="row clearfix">
+    <div class="col-lg-12">
+      <div class="card chat-app">
+        <div class="logo-container">
+          <img class="logo-app" src="assets/ChatUpLogo.jpg" alt="">
+          <span class="text-app"> ChatUp </span>
+        </div>
+
+        <!-- People list -->
+        <div id="plist" class="people-list">
+          <div class="search-container">
+            <div class=" input-group input-group-lg">
+              <input type="text" class="search-bar form-control" aria-label="Large"
+                aria-describedby="inputGroup-sizing-sm">
+            </div>
+
+            <button class="btn create-chat-button" type="submit"> + </button>
+          </div>
+          <ul *ngFor="let chat of chats" (click)="getMessagesbyId(chat.chatId)"
+            class="list-unstyled chat-list mt-2 mb-0">
+            <li class="clearfix">
+              <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+              <div class="about">
+                <div class="name"> {{chat.chatName}} </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="chat">
+
+          <!-- Chat header -->
+          <div class="chat-header clearfix">
+            <div class="row">
+              <div class="col-lg-6">
+                <a href="javascript:void(0);" data-toggle="modal" data-target="#view_info">
+                  <img src="https://bootdey.com/img/Content/avatar/avatar2.png" alt="avatar">
+                </a>
+                <div class="chat-about">
+                  <h3 class="m-b-0">Eva</h3>
+                  <small>Hablando con: </small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat history -->
+          <div class="chat-history">
+            <ul class="m-b-0">
+              <li *ngFor="let message of messages" class="clearfix">
+                <div *ngIf="message.sender === userId; else otherMessage" class="message-data text-right">
+                  <span class="message-data-time">{{ message.timestamp | date: 'shortTime' }}</span>
+                  <img src="https://bootdey.com/img/Content/avatar/avatar7.png" alt="avatar">
+                  <div class="message my-message float-right">{{ message.content }}</div>
+                </div>
+                <ng-template #otherMessage>
+                  <div class="message-data">
+                    <span class="message-data-time">{{ message.timestamp | date: 'shortTime' }}</span>
+                    <img src="https://bootdey.com/img/Content/avatar/avatar1.png" alt="avatar">
+                    <div class="message other-message">{{ message.content }}</div>
+                  </div>
+                </ng-template>
+              </li>
+            </ul>
+          </div>
+          <div class="chat-message clearfix">
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" placeholder="Escribe tu mensaje..." [(ngModel)]="messageContent">
+              <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="button" (click)="sendMessage()">Enviar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
